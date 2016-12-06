@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!--<link rel="stylesheet" href="http://nvd3.org/assets/css/nv.d3.css">-->
+    <!--<link rel="stylesheet" href="http://www.jeasyui.com/easyui/themes/default/easyui.css">-->
+    <style>
+
+        body {
+            font: 10px sans-serif;
+        }
+
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+        }
+
+        .x.axis path {
+            display: none;
+        }
+
+        .line {
+            fill: none;
+            stroke: steelblue;
+            stroke-width: 1.5px;
+        }
+
+        .overlay {
+            fill: none;
+            pointer-events: all;
+        }
+
+        .focus circle {
+            fill: none;
+            stroke: steelblue;
+        }
+
+    </style>
+    <title>Process local CSV file</title>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
+    <script type="text/javascript">
+
+        $(function() {
+            $("#upload").bind("click", function() {
+                var regex = /^([a-zA-Z0-9\s_\\.\-:])+(.csv|.txt)$/;
+                if (regex.test($("#fileUpload").val().toLowerCase())) {
+                    if (typeof(FileReader) != "undefined") {
+                        var reader = new FileReader();
+                        reader.onload = function(e) {
+                            var table = $("<table />");
+                            var rows = e.target.result.split("\n");
+                            for (var i = 0; i < rows.length; i++) {
+                                var row = $("<tr />");
+                                var cells = rows[i].split(",");
+                                for (var j = 0; j < cells.length; j++) {
+                                    var cell = $("<td />");
+                                    cell.html(cells[j]);
+                                    row.append(cell);
+                                }
+                                table.append(row);
+                            }
+                            $("#dvCSV").html('');
+                            $("#dvCSV").append(table);
+
+
+                            console.log(reader.result);
+
+                            lineData = d3.csv.parse(reader.result, function (d) {
+                                return {
+                                    x: d.x,
+                                    y: +d.y
+                                };
+                            });
+
+                            console.log(lineData);
+                        };
+                        reader.readAsText($("#fileUpload")[0].files[0]);
+
+                    } else {
+                        alert("This browser does not support HTML5.");
+                    }
+                } else {
+                    alert("Please upload a valid CSV file.");
+                }
+            });
+        });
+    </script>
+    <script>
+
+
+
+        $(function() {
+            $("#plot").bind("click", function() {
+
+
+                var vis = d3.select('#visualisation'),
+                        WIDTH = 1000,
+                        HEIGHT = 500,
+                        MARGINS = {
+                            top: 20,
+                            right: 20,
+                            bottom: 20,
+                            left: 50
+                        },
+                        xRange = d3.scale.linear().range([MARGINS.left, WIDTH - MARGINS.right]).domain([d3.min(lineData, function(d) {
+                            return d.x;
+                        }), d3.max(lineData, function(d) {
+                            return d.x;
+                        })]),
+                        yRange = d3.scale.linear().range([HEIGHT - MARGINS.top, MARGINS.bottom]).domain([d3.min(lineData, function(d) {
+                            return d.y;
+                        }), d3.max(lineData, function(d) {
+                            return d.y;
+                        })]),
+                        xAxis = d3.svg.axis()
+                                .scale(xRange)
+                                .tickSize(5)
+                                .tickSubdivide(true),
+                        yAxis = d3.svg.axis()
+                                .scale(yRange)
+                                .tickSize(5)
+                                .orient('left')
+                                .tickSubdivide(true);
+
+                vis.append('svg:g')
+                        .attr('class', 'x axis')
+                        .attr('transform', 'translate(0,' + (HEIGHT - MARGINS.bottom) + ')')
+                        .call(xAxis);
+
+                vis.append('svg:g')
+                        .attr('class', 'y axis')
+                        .attr('transform', 'translate(' + (MARGINS.left) + ',0)')
+                        .call(yAxis);
+
+
+                var lineFunc = d3.svg.line()
+                        .x(function(d) {
+                            return xRange(d.x);
+                        })
+                        .y(function(d) {
+                            return yRange(d.y);
+                        })
+                        .interpolate('linear');
+
+                vis.append('svg:path')
+                        .attr('d', lineFunc(lineData))
+                        .attr('stroke', 'blue')
+                        .attr('stroke-width', 2)
+                        .attr('fill', 'none');
+
+                console.log(lineData);
+            })
+        });
+
+    </script>
+</head>
+
+<body>
+<input type="file" id="fileUpload" />
+<input type="button" id="upload" value="Upload" />
+<input type="button" id="plot" value="Plot" />
+<hr />
+<div id="dvCSV">
+</div>
+
+
+<div class="container">
+
+    <svg id="visualisation" width="1000" height="500"></svg>
+</div>
+
+
+
+</body>
+
+</html>
