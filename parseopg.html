@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+    $.ajax({
+        type: "GET",
+        url: "http://localhost:8000/static/opg_test.opg",
+        dataType: "text",
+        success: function(data) {processData(data);}
+     });
+});
+
+function processData(allText) {
+    var allTextLines = allText.split(/\r\n|\n/);
+    var lines = [];
+
+    for (var i=1; i<allTextLines.length; i++) {
+        var data = allTextLines[i].split(',');
+        console.log(data);
+    }
+    // alert(lines);
+}</script>
+    <title>Title</title>
+</head>
+<body>
+
+</body>
+</html>
